@@ -41,12 +41,13 @@ def describe_image(image_data: bytes) -> str:
         ]
         # 3. 访问 LLM 的实例
         vl_llm = ChatTongyi(
-            model_name = "qwen3.5-flash",
+            model_name = "qwen-vl-plus",
             temperature = 0.0,
             dashscope_api_key = API_KEY
         )
         # 4. 把访问 LLM 得到的结果进行处理返回
         resp = vl_llm.invoke([HumanMessage(content=human_content)])
+        print(f"图片描述为：{resp.content}")
         return resp.content[0]["text"]
     except Exception as e:
         print(f"生成图片的文字描述信息出现异常{e}")
@@ -63,8 +64,8 @@ def validate_image(image_desc: str) -> bool:
                     "你是一个图片审核助手，当前的业务只允许两种图片："
                     "1) 衣服/服装/穿搭相关；"
                     "2) 人物人像（人脸照、半身照、全身照）。\n"
-                    "需要你来判断当前图片的内容是否是以上两类照片。如果是，则输出是；如果不是，则输出否"
-                    "请严格只输出是或否，不要别的内容"
+                    "需要你来判断当前图片的内容是否是以上两类照片。如果是，则输出是；如果不是，则输出否\n"
+                    "严格只输出是或否"
                 ),
                 (
                     "human", f"图片文字描述：{image_desc}"
@@ -72,13 +73,14 @@ def validate_image(image_desc: str) -> bool:
             ]
         )
         llm = ChatTongyi(
-            model_name="qwen3.5-flash",
+            model_name="qwen-vl-plus",
             temperature=0.7,
             dashscope_api_key=API_KEY
         )
 
-        resp = llm.invoke(prompt)
-        text = resp.content
+        resp = llm.invoke(prompt.format_messages())
+        text = resp.content[0]["text"]
+        print(f"判定结果为；{text}")
         return text.startswith("是")
     except Exception as e:
         print(f"图片内容判定的时候出现异常{e}")
